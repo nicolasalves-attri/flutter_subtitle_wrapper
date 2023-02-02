@@ -16,15 +16,15 @@ analyzer:
     missing_required_param: error
     missing_return: error
     todo: info
-    unused_catch_clause: error
-    unused_catch_stack: error
-    unused_element: error
-    unused_field: error
-    unused_import: error
-    unused_label: error
-    unused_local_variable: error
-    unused_result: error
-    unused_shown_name: error
+    # unused_catch_clause: error
+    # unused_catch_stack: error
+    # unused_element: error
+    # unused_field: error
+    # unused_import: error
+    # unused_label: error
+    # unused_local_variable: error
+    # unused_result: error
+    # unused_shown_name: error
 
   exclude:
     - "**/*.g.dart"

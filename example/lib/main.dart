@@ -1,3 +1,4 @@
+import 'package:bitmovin_player/bitmovin_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:example/data/sw_constants.dart';
 import 'package:flutter/material.dart';
@@ -17,9 +18,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({
-    Key key,
-  }) : super(key: key);
+  const MyHomePage();
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -28,51 +27,39 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final String link = SwConstants.videoUrl;
   final SubtitleController subtitleController = SubtitleController(
-    subtitleUrl: SwConstants.enSubtitle,
+    subtitleUrl: 'https://www.nicolasalves.dev.br/legenda-teste.vtt',
     subtitleDecoder: SubtitleDecoder.utf8,
   );
 
-  VideoPlayerController get videoPlayerController {
-    return VideoPlayerController.network(link);
-  }
-
-  ChewieController get chewieController {
-    return ChewieController(
-      videoPlayerController: videoPlayerController,
-      aspectRatio: 3 / 2,
-      autoPlay: true,
-      autoInitialize: true,
-      allowFullScreen: false,
+  late BitmovinPlayerController videoController;
+  @override
+  void initState() {
+    super.initState();
+    videoController = BitmovinPlayerController.network(
+      'https://dacastmmod-mmd-cust.lldns.net/e2/cdd5f530-9b2d-90b1-901e-614083c77aab/stream.ismd/manifest.m3u8?stream=77d042d5-7b71-5050-e031-31ed4e0b3656_rendition%3B72871450-d4a6-4979-afb4-de8544f7d777_rendition%3B59feb029-b7c0-00a7-1640-ceb48d130f76_rendition%3B0494ca03-9289-7c1b-c9bc-4ed0eebb9744_rendition&p=90&h=617ee645698e46a4cd7d3d8fc523b52f',
+      sourceConfig: BitmovinSourceConfig(
+        subtitles: [
+          // BSubtitleTrack(
+          //   'https://www.nicolasalves.dev.br/legenda-teste.vtt',
+          //   id: "br",
+          //   label: 'pt-br',
+          //   language: 'pt-br',
+          //   isDefault: true,
+          // )
+        ],
+        defaultSubtitleTrackId: 'br',
+      ),
     );
   }
 
-  void updateSubtitleUrl({
-    ExampleSubtitleLanguage subtitleLanguage,
-  }) {
-    String subtitleUrl;
-    switch (subtitleLanguage) {
-      case ExampleSubtitleLanguage.english:
-        subtitleUrl = SwConstants.enSubtitle;
-        break;
-      case ExampleSubtitleLanguage.spanish:
-        subtitleUrl = SwConstants.esSubtitle;
-        break;
-      case ExampleSubtitleLanguage.dutch:
-        subtitleUrl = SwConstants.nlSubtitle;
-        break;
-      default:
-    }
-    if (subtitleUrl != null) {
-      subtitleController.updateSubtitleUrl(
-        url: subtitleUrl,
-      );
-    }
+  @override
+  void dispose() {
+    videoController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final localChewieController = chewieController;
-
     return Scaffold(
       backgroundColor: const Color(0xff0b090a),
       body: Column(
@@ -82,20 +69,27 @@ class _MyHomePageState extends State<MyHomePage> {
               top: MediaQuery.of(context).padding.top,
             ),
             child: SizedBox(
-              height: 270,
+              // height: 270,
               child: SubtitleWrapper(
-                videoPlayerController:
-                    localChewieController.videoPlayerController,
+                videoPlayerController: videoController,
                 subtitleController: subtitleController,
                 subtitleStyle: const SubtitleStyle(
                   textColor: Colors.white,
                   hasBorder: true,
+                  fontSize: 12,
+                  borderStyle: SubtitleBorderStyle(color: Colors.black54),
                 ),
-                videoChild: Chewie(
-                  controller: localChewieController,
-                ),
+                backgroundColor: Colors.black45,
+                videoChild: BitmovinPlayer(controller: videoController),
               ),
             ),
+          ),
+          Row(
+            children: [
+              TextButton(onPressed: () => videoController.play(), child: Text('Play')),
+              TextButton(onPressed: () => videoController.pause(), child: Text('Pause')),
+              TextButton(onPressed: () => videoController.seekTo(Duration.zero), child: Text('Restart')),
+            ],
           ),
           Expanded(
             child: Container(
@@ -147,68 +141,6 @@ class _MyHomePageState extends State<MyHomePage> {
                           const Divider(
                             color: Colors.grey,
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ElevatedButton(
-                                style: ButtonStyle(
-                                  elevation:
-                                      MaterialStateProperty.all<double>(8.0),
-                                  shape: MaterialStateProperty.all<
-                                      RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        8.0,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                onPressed: () => updateSubtitleUrl(
-                                  subtitleLanguage:
-                                      ExampleSubtitleLanguage.english,
-                                ),
-                                child: const Text('Switch to 🇬🇧'),
-                              ),
-                              ElevatedButton(
-                                style: ButtonStyle(
-                                  elevation:
-                                      MaterialStateProperty.all<double>(8.0),
-                                  shape: MaterialStateProperty.all<
-                                      RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        8.0,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                onPressed: () => updateSubtitleUrl(
-                                  subtitleLanguage:
-                                      ExampleSubtitleLanguage.spanish,
-                                ),
-                                child: const Text('Switch to 🇪🇸'),
-                              ),
-                              ElevatedButton(
-                                style: ButtonStyle(
-                                  elevation:
-                                      MaterialStateProperty.all<double>(8.0),
-                                  shape: MaterialStateProperty.all<
-                                      RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        8.0,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                onPressed: () => updateSubtitleUrl(
-                                  subtitleLanguage:
-                                      ExampleSubtitleLanguage.dutch,
-                                ),
-                                child: const Text('Switch to 🇳🇱'),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
                     ),
@@ -220,15 +152,6 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    if (videoPlayerController != null && chewieController != null) {
-      videoPlayerController?.dispose();
-      chewieController?.dispose();
-    }
   }
 }
 

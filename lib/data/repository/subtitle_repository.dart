@@ -112,13 +112,13 @@ class SubtitleDataRepository extends SubtitleRepository {
     RegExp regExp;
     if (subtitleType == SubtitleType.webvtt) {
       regExp = RegExp(
-        r'((\d{2}):(\d{2}):(\d{2})\.(\d+)) +--> +((\d{2}):(\d{2}):(\d{2})\.(\d{3})).*[\r\n]+\s*((?:(?!\r?\n\r?).)*(\r\n|\r|\n)(?:.*))',
+        r'((\d{2}):(\d{2}):(\d{2})\.(\d+)) +--> +((\d{2}):(\d{2}):(\d{2})\.(\d{3}))(.*)[\r\n]+\s*((?:(?!\r?\n\r?).)*(\r\n|\r|\n)(?:.*))',
         caseSensitive: false,
         multiLine: true,
       );
     } else if (subtitleType == SubtitleType.srt) {
       regExp = RegExp(
-        r'((\d{2}):(\d{2}):(\d{2})\,(\d+)) +--> +((\d{2}):(\d{2}):(\d{2})\,(\d{3})).*[\r\n]+\s*((?:(?!\r?\n\r?).)*(\r\n|\r|\n)(?:.*))',
+        r'((\d{2}):(\d{2}):(\d{2})\,(\d+)) +--> +((\d{2}):(\d{2}):(\d{2})\,(\d{3}))(.*)[\r\n]+\s*((?:(?!\r?\n\r?).)*(\r\n|\r|\n)(?:.*))',
         caseSensitive: false,
         multiLine: true,
       );
@@ -130,6 +130,19 @@ class SubtitleDataRepository extends SubtitleRepository {
     final List<Subtitle> subtitleList = [];
 
     for (final RegExpMatch regExpMatch in matches) {
+      final String attributes = regExpMatch.group(11) ?? "";
+
+      // final RegExp expPosition = RegExp(r'position:([\d.]+)%(?:,(line-left|line-right|center|start|end))');
+      final RegExp expPosition = RegExp(r'position:([\d.]+)%');
+      final RegExp expLine = RegExp(r'line:([\d.]+)%');
+      final RegExp expSize = RegExp(r'size:([\d.]+)%');
+      // final RegExp expLine = RegExp(r'line:([\d.]+)%(?:,(start|end|center))');
+      final RegExp expAlign = RegExp('align:(start|middle|center|end|left|right)');
+
+      // print('position: ${expPosition.firstMatch(attributes)?.group(1)}');
+      // print('line: ${expLine.firstMatch(attributes)?.group(1)}');
+      // print('align: ${expAlign.firstMatch(attributes)?.group(1)}');
+
       final startTimeHours = int.parse(regExpMatch.group(2)!);
       final startTimeMinutes = int.parse(regExpMatch.group(3)!);
       final startTimeSeconds = int.parse(regExpMatch.group(4)!);
@@ -139,7 +152,9 @@ class SubtitleDataRepository extends SubtitleRepository {
       final endTimeMinutes = int.parse(regExpMatch.group(8)!);
       final endTimeSeconds = int.parse(regExpMatch.group(9)!);
       final endTimeMilliseconds = int.parse(regExpMatch.group(10)!);
-      final text = removeAllHtmlTags(regExpMatch.group(11)!);
+      final String text = regExpMatch.group(12)?.trim().replaceAll(RegExp(r'\n'), '<br>') ?? "";
+      // print(text);
+      // print(text.replaceAll('\n', '<br>'));
 
       final startTime = Duration(
         hours: startTimeHours,
@@ -155,7 +170,15 @@ class SubtitleDataRepository extends SubtitleRepository {
       );
 
       subtitleList.add(
-        Subtitle(startTime: startTime, endTime: endTime, text: text.trim()),
+        Subtitle(
+          startTime: startTime,
+          endTime: endTime,
+          text: text,
+          align: expAlign.firstMatch(attributes)?.group(1),
+          position: double.tryParse(expPosition.firstMatch(attributes)?.group(1) ?? ""),
+          line: double.tryParse(expLine.firstMatch(attributes)?.group(1) ?? ""),
+          size: double.tryParse(expSize.firstMatch(attributes)?.group(1) ?? ""),
+        ),
       );
     }
 
@@ -170,9 +193,8 @@ class SubtitleDataRepository extends SubtitleRepository {
     var newHtmlText = htmlText;
     exp.allMatches(htmlText).toList().forEach(
       (RegExpMatch regExpMatch) {
-        newHtmlText = regExpMatch.group(0) == '<br>'
-            ? newHtmlText.replaceAll(regExpMatch.group(0)!, '\n')
-            : newHtmlText.replaceAll(regExpMatch.group(0)!, '');
+        newHtmlText =
+            regExpMatch.group(0) == '<br>' ? newHtmlText.replaceAll(regExpMatch.group(0)!, '\n') : newHtmlText.replaceAll(regExpMatch.group(0)!, '');
       },
     );
 
@@ -180,8 +202,7 @@ class SubtitleDataRepository extends SubtitleRepository {
   }
 
   // Extract the encoding type from the headers.
-  Encoding _encodingForHeaders(Map<String, String> headers) =>
-      encodingForCharset(
+  Encoding _encodingForHeaders(Map<String, String> headers) => encodingForCharset(
         _contentTypeForHeaders(headers).parameters['charset'],
       );
 

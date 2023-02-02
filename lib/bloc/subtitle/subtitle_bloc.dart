@@ -1,15 +1,15 @@
 import 'dart:async';
 
+import 'package:bitmovin_player/bitmovin_player.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:subtitle_wrapper_package/subtitle_wrapper_package.dart';
-import 'package:video_player/video_player.dart';
 
 part 'subtitle_event.dart';
 part 'subtitle_state.dart';
 
 class SubtitleBloc extends Bloc<SubtitleEvent, SubtitleState> {
-  final VideoPlayerController videoPlayerController;
+  final BitmovinPlayerController videoPlayerController;
   final SubtitleRepository subtitleRepository;
   final SubtitleController subtitleController;
 
@@ -46,15 +46,12 @@ class SubtitleBloc extends Bloc<SubtitleEvent, SubtitleState> {
     videoPlayerController.addListener(
       () {
         final videoPlayerPosition = videoPlayerController.value.position;
-        if (videoPlayerPosition.inMilliseconds >
-            subtitles.subtitles.last.endTime.inMilliseconds) {
+        if (videoPlayerPosition.inMilliseconds > subtitles.subtitles.last.endTime.inMilliseconds) {
           add(CompletedShowingSubtitles());
         }
         for (final Subtitle subtitleItem in subtitles.subtitles) {
-          final bool validStartTime = videoPlayerPosition.inMilliseconds >
-              subtitleItem.startTime.inMilliseconds;
-          final bool validEndTime = videoPlayerPosition.inMilliseconds <
-              subtitleItem.endTime.inMilliseconds;
+          final bool validStartTime = videoPlayerPosition.inMilliseconds > subtitleItem.startTime.inMilliseconds;
+          final bool validEndTime = videoPlayerPosition.inMilliseconds < subtitleItem.endTime.inMilliseconds;
           if (validStartTime && validEndTime) {
             add(
               UpdateLoadedSubtitle(

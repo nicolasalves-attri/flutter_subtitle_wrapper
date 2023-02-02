@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:subtitle_wrapper_package/bloc/subtitle/subtitle_bloc.dart';
 import 'package:subtitle_wrapper_package/data/constants/view_keys.dart';
 import 'package:subtitle_wrapper_package/data/models/style/subtitle_style.dart';
+import 'package:subtitle_wrapper_package/data/models/subtitle.dart';
 
 class SubtitleTextView extends StatelessWidget {
   final SubtitleStyle subtitleStyle;
   final Color? backgroundColor;
 
   const SubtitleTextView({
-    Key? key,
+    super.key,
     required this.subtitleStyle,
     this.backgroundColor,
-  }) : super(key: key);
+  });
 
   TextStyle get _textStyle {
     return subtitleStyle.hasBorder
@@ -29,6 +31,10 @@ class SubtitleTextView extends StatelessWidget {
           );
   }
 
+  double percentToPositionOffset(double percent) {
+    return (percent - 50) / 50;
+  }
+
   @override
   Widget build(BuildContext context) {
     final subtitleBloc = BlocProvider.of<SubtitleBloc>(context);
@@ -40,59 +46,128 @@ class SubtitleTextView extends StatelessWidget {
       }
     }
 
-    return BlocConsumer<SubtitleBloc, SubtitleState>(
-      listener: _subtitleBlocListener,
-      builder: (context, state) {
-        return state is LoadedSubtitle
-            ? Stack(
-                children: <Widget>[
-                  Center(
+    return Positioned.fill(
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: BlocConsumer<SubtitleBloc, SubtitleState>(
+          listener: _subtitleBlocListener,
+          builder: (context, state) {
+            if (state is LoadedSubtitle) {
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return Align(
+                    alignment:
+                        Alignment(percentToPositionOffset(state.subtitle!.position ?? 50), percentToPositionOffset(state.subtitle!.line ?? 100)),
                     child: Container(
-                      color: backgroundColor,
-                      child: _TextContent(
-                        text: state.subtitle!.text,
-                        textStyle: _textStyle,
+                      constraints:
+                          state.subtitle?.size != null ? BoxConstraints(maxWidth: constraints.maxWidth * (state.subtitle!.size! / 100)) : null,
+                      child: Stack(
+                        children: [
+                          IntrinsicWidth(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+                              color: backgroundColor,
+                              child: _TextContent(
+                                state.subtitle!,
+                                textStyle: _textStyle,
+                              ),
+                            ),
+                          ),
+                          if (subtitleStyle.hasBorder)
+                            IntrinsicWidth(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+                                child: _TextContent(
+                                  state.subtitle!,
+                                  textStyle: TextStyle(
+                                    color: subtitleStyle.textColor,
+                                    fontSize: subtitleStyle.fontSize,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                  ),
-                  if (subtitleStyle.hasBorder)
-                    Center(
-                      child: Container(
-                        color: backgroundColor,
-                        child: _TextContent(
-                          text: state.subtitle!.text,
-                          textStyle: TextStyle(
-                            color: subtitleStyle.textColor,
-                            fontSize: subtitleStyle.fontSize,
+                  );
+                },
+              );
+            } else {
+              return const Offstage();
+            }
+            // print('reload');
+            return state is LoadedSubtitle
+                ? ColoredBox(
+                    color: Colors.green,
+                    child: Stack(
+                      children: <Widget>[
+                        Align(
+                          alignment: Alignment.topCenter,
+                          child: Container(
+                            color: backgroundColor,
+                            padding: const EdgeInsets.all(3),
+                            child: _TextContent(
+                              state.subtitle!,
+                              textStyle: _textStyle,
+                            ),
                           ),
                         ),
-                      ),
+                        if (subtitleStyle.hasBorder)
+                          ColoredBox(
+                            color: Colors.green,
+                            child: Center(
+                              child: Container(
+                                color: backgroundColor,
+                                padding: const EdgeInsets.all(3),
+                                child: _TextContent(
+                                  state.subtitle!,
+                                  textStyle: TextStyle(
+                                    color: subtitleStyle.textColor,
+                                    fontSize: subtitleStyle.fontSize,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                ],
-              )
-            : Container();
-      },
+                  )
+                : Container();
+          },
+        ),
+      ),
     );
   }
 }
 
 class _TextContent extends StatelessWidget {
-  const _TextContent({
-    Key? key,
+  const _TextContent(
+    this.subtitle, {
+    super.key,
     required this.textStyle,
-    required this.text,
-  }) : super(key: key);
+  });
 
   final TextStyle textStyle;
-  final String text;
+  final Subtitle subtitle;
+
+  String? get cssTextAlign {
+    switch (subtitle.align) {
+      case 'start':
+        return 'left';
+      case 'end':
+        return 'right';
+      default:
+        return subtitle.align;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
+    return HtmlWidget(
+      '<div>${subtitle.text}</div>',
       key: ViewKeys.subtitleTextContent,
-      textAlign: TextAlign.center,
-      style: textStyle,
+      textStyle: textStyle,
+      customStylesBuilder: (element) => {'text-align': cssTextAlign ?? 'center'},
     );
   }
 }

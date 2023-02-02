@@ -43,5 +43,9 @@
 	<false/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>BitmovinPlayerLicenseKey</key>
+	<string>fc69f6da-01a2-428c-becb-602361785208</string>
 </dict>
 </plist>
