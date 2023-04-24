@@ -19,6 +19,14 @@ class Subtitle extends Equatable {
     this.size,
   }) : _position = position;
 
+  factory Subtitle.empty() {
+    return Subtitle(
+      startTime: Duration.zero,
+      endTime: Duration.zero,
+      text: "",
+    );
+  }
+
   double? get position {
     if (_position != null) {
       return _position;

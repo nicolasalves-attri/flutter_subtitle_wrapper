@@ -24,29 +24,34 @@ class SubtitleWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      // fit: StackFit.expand,
-      children: <Widget>[
-        videoChild,
-        if (subtitleController.showSubtitles)
-          BlocProvider(
-            create: (context) => SubtitleBloc(
-              videoPlayerController: videoPlayerController,
-              subtitleRepository: SubtitleDataRepository(
+    return StreamBuilder<bool>(
+      stream: subtitleController.isShowingController.stream,
+      builder: (_, showingController) => Stack(
+        // fit: StackFit.expand,
+        children: <Widget>[
+          videoChild,
+          if (subtitleController.showSubtitles)
+            BlocProvider(
+              create: (context) => SubtitleBloc(
+                videoPlayerController: videoPlayerController,
+                subtitleRepository: SubtitleDataRepository(subtitleController: subtitleController),
                 subtitleController: subtitleController,
+              )..add(InitSubtitles(subtitleController: subtitleController)),
+              child: ValueListenableBuilder<bool>(
+                valueListenable: subtitleController.hide,
+                builder: (_, hide, __) => !hide
+                    ? SubtitleTextView(
+                        subtitleStyle: subtitleStyle,
+                        backgroundColor: backgroundColor,
+                        showingController: showingController.data == true,
+                      )
+                    : const Offstage(),
               ),
-              subtitleController: subtitleController,
-            )..add(
-                InitSubtitles(subtitleController: subtitleController),
-              ),
-            child: SubtitleTextView(
-              subtitleStyle: subtitleStyle,
-              backgroundColor: backgroundColor,
-            ),
-          )
-        else
-          Container(),
-      ],
+            )
+          else
+            Container(),
+        ],
+      ),
     );
   }
 }

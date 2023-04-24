@@ -18,4 +18,10 @@ class UpdateLoadedSubtitle extends SubtitleEvent {
   UpdateLoadedSubtitle({required this.subtitle});
 }
 
+class HideSubtitle extends SubtitleEvent {
+  final SubtitleController subtitleController;
+
+  HideSubtitle({required this.subtitleController});
+}
+
 class CompletedShowingSubtitles extends SubtitleEvent {}

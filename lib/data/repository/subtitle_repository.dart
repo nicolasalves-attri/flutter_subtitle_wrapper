@@ -37,6 +37,14 @@ class SubtitleDataRepository extends SubtitleRepository {
     var subtitlesContent = subtitleController.subtitlesContent;
     final subtitleUrl = subtitleController.subtitleUrl;
 
+    if (subtitlesContent == null && subtitleUrl == null) {
+      return Subtitles(
+        subtitles: [
+          Subtitle(startTime: Duration.zero, endTime: Duration(seconds: 1), text: ""),
+        ],
+      );
+    }
+
     // If the subtitle content parameter is empty we will load the subtitle from the specified url.
     if (subtitlesContent == null && subtitleUrl != null) {
       // Lets load the subtitle content from the url.

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:subtitle_wrapper_package/bloc/subtitle/subtitle_bloc.dart';
 
 class SubtitleController {
@@ -6,6 +9,9 @@ class SubtitleController {
   final bool showSubtitles;
   SubtitleDecoder? subtitleDecoder;
   SubtitleType subtitleType;
+  final StreamController<bool> isShowingController = StreamController();
+  final hide = ValueNotifier<bool>(false);
+
   //
   bool _attached = false;
   SubtitleBloc? _subtitleBloc;
@@ -56,6 +62,28 @@ class SubtitleController {
     } else {
       throw Exception('Seems that the controller is not correctly attached.');
     }
+  }
+
+  void hideSubtitle() {
+    hide.value = true;
+    _subtitleBloc!.add(
+      HideSubtitle(subtitleController: this),
+    );
+  }
+
+  void showSubtitle() {
+    hide.value = false;
+    _subtitleBloc!.add(
+      LoadSubtitle(),
+    );
+  }
+
+  void showingController() {
+    isShowingController.add(true);
+  }
+
+  void hidingController() {
+    isShowingController.add(false);
   }
 }
 
