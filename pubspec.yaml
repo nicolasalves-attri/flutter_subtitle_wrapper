@@ -9,8 +9,9 @@ environment:
 
 dependencies:
   bitmovin_player:
-    url: git@github.com:Attri-242/aquarius-downtown.git
-    ref: bitmovin-player
+    git:
+      url: git@github.com:Attri-242/aquarius-downtown.git
+      ref: bitmovin-player
   bloc: ^8.0.3
   equatable: ^2.0.3
   flutter:
